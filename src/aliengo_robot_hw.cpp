@@ -106,6 +106,7 @@ void AliengoRobotHw::init()
     imu_acc_pub_.reset(new realtime_tools::RealtimePublisher<geometry_msgs::Vector3>(root_nh,	"/aliengo/trunk_imu", 1));
     imu_euler_pub_.reset(new realtime_tools::RealtimePublisher<geometry_msgs::Vector3>(root_nh,	"/aliengo/euler_imu", 1));
     contact_state_pub_.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(root_nh,	"/aliengo/contact_force_z", 1));
+    imu_pub_ = std::make_shared<realtime_tools::RealtimePublisher<sensor_msgs::Imu>>(root_nh, "/aliengo/imu", 1);
 
 }
 
@@ -135,7 +136,7 @@ if (not is_remove_yaw_set_)
       is_remove_yaw_set_ = true;
     }
 
-    if ( base_pub_counter%4 == 0)
+    if ( base_pub_counter%2 == 0) // task rate should be 500 hz on aliengo, we publish at 250 hz
     {
         imu_orientation_raw_[0] = static_cast<double>(aliengo_state_.imu.quaternion[0]);  // w
         imu_orientation_raw_[1] = static_cast<double>(aliengo_state_.imu.quaternion[1]);  // x
@@ -162,6 +163,24 @@ if (not is_remove_yaw_set_)
         imu_lin_acc_[0] = static_cast<double>(aliengo_state_.imu.accelerometer[0]);
         imu_lin_acc_[1] = static_cast<double>(aliengo_state_.imu.accelerometer[1]);
         imu_lin_acc_[2] = static_cast<double>(aliengo_state_.imu.accelerometer[2]);
+
+        if(imu_pub_.get() && imu_pub_->trylock()){
+            imu_pub_->msg_.linear_acceleration.x = aliengo_state_.imu.accelerometer[0];
+            imu_pub_->msg_.linear_acceleration.y = aliengo_state_.imu.accelerometer[1];
+            imu_pub_->msg_.linear_acceleration.z = aliengo_state_.imu.accelerometer[2];
+
+            imu_pub_->msg_.angular_velocity.x = aliengo_state_.imu.gyroscope[0];
+            imu_pub_->msg_.angular_velocity.y = aliengo_state_.imu.gyroscope[1];
+            imu_pub_->msg_.angular_velocity.z = aliengo_state_.imu.gyroscope[2];
+
+            imu_pub_->msg_.orientation.w = aliengo_state_.imu.quaternion[0];
+            imu_pub_->msg_.orientation.x = aliengo_state_.imu.quaternion[1];
+            imu_pub_->msg_.orientation.y = aliengo_state_.imu.quaternion[2];
+            imu_pub_->msg_.orientation.z = aliengo_state_.imu.quaternion[3];
+
+            imu_pub_->msg_.header.stamp = ros::Time::now();
+            imu_pub_->unlockAndPublish();
+        }
 
 
         // Publish the IMU data NOTE: missing covariances
