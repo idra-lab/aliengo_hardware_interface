@@ -53,7 +53,8 @@ int main(int argc, char**argv)
     auto prev_start = start;
     auto end = start;
     double elapsed_seconds = 0.0;
-
+	
+    ros::Rate r(1 / period);
     // Run the servo loop
     while (ros::ok())
     {
@@ -70,18 +71,18 @@ int main(int argc, char**argv)
         // Keep the ros magic alive
         ros::spinOnce();
 
-        end = std::chrono::system_clock::now();
+        //end = std::chrono::system_clock::now();
 
-        elapsed_seconds = std::chrono::duration_cast<
-          std::chrono::duration<double> >(end - start).count();
+        //elapsed_seconds = std::chrono::duration_cast<
+        //  std::chrono::duration<double> >(end - start).count();
 
+	r.sleep();
         // Sleep to keep the loop at specified period
-        if(elapsed_seconds >= period)
-            continue; // Do not sleep
-        else
-            std::this_thread::sleep_for( std::chrono::duration<double>(period - elapsed_seconds) ); // Sleep the remaining time
-
-        prev_start = start;
+        //if(elapsed_seconds >= period)
+        //    continue; // Do not sleep
+        //else
+        //    std::this_thread::sleep_for( std::chrono::duration<double>(period - elapsed_seconds) ); // Sleep the remaining time
+        //prev_start = start;
     }
 
     spinner.stop();

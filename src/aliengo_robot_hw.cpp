@@ -149,7 +149,7 @@ void AliengoRobotHw::read()
       is_remove_yaw_set_ = true;
     }
 
-    if ( base_pub_counter%2 == 0) // task rate should be 500 hz on aliengo, we publish at 250 hz
+    if ( true) // task rate should be 500 hz on aliengo, we publish at 250 hz
     {
         imu_orientation_raw_[0] = static_cast<double>(aliengo_state_.imu.quaternion[0]);  // w
         imu_orientation_raw_[1] = static_cast<double>(aliengo_state_.imu.quaternion[1]);  // x
