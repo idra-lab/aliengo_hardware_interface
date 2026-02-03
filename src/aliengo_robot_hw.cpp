@@ -107,6 +107,7 @@ void AliengoRobotHw::init()
     imu_euler_pub_.reset(new realtime_tools::RealtimePublisher<geometry_msgs::Vector3>(root_nh,	"/aliengo/euler_imu", 1));
     contact_state_pub_.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64MultiArray>(root_nh,	"/aliengo/contact_force_z", 1));
     imu_pub_ = std::make_shared<realtime_tools::RealtimePublisher<sensor_msgs::Imu>>(root_nh, "/aliengo/imu", 1);
+    feet_forces_pub_ = std::make_shared<realtime_tools::RealtimePublisher<aliengo_hardware_interface::QuadrupedForceTorqueSensors>>(root_nh, "/aliengo/feet_forces", 1);
 
 }
 
@@ -124,8 +125,20 @@ void AliengoRobotHw::read()
         joint_velocity_[jj] = static_cast<double>(aliengo_state_.motorState[aliengo_motor_idxs_[jj]].dq)    ;
         joint_effort_[jj]   = static_cast<double>(aliengo_state_.motorState[aliengo_motor_idxs_[jj]].tauEst);
     }
+  
+    //read contact forces (thery are in weird unit of measure not Newton)
+    if(feet_forces_pub_.get() && feet_forces_pub_->trylock()){
+	    // Unitree ordering is: RF, LF, RH, LH
+	    // or, using their definition: FR, FL, RR, RL
+	    feet_forces_pub_->msg_.rf.force.z = aliengo_state_.footForce[0];
+	    feet_forces_pub_->msg_.lf.force.z = aliengo_state_.footForce[1];
+	    feet_forces_pub_->msg_.rh.force.z = aliengo_state_.footForce[2];
+	    feet_forces_pub_->msg_.lh.force.z = aliengo_state_.footForce[3];      
+	    feet_forces_pub_->msg_.header.stamp = ros::Time::now();
+	    feet_forces_pub_->unlockAndPublish();
+   }
 
-if (not is_remove_yaw_set_)
+    if (not is_remove_yaw_set_)
     {
       // These lines remove init yaw of the robot
       remove_euler_[2] = -static_cast<double>(aliengo_state_.imu.rpy[2]);

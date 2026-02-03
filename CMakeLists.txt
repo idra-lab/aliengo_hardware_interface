@@ -6,7 +6,20 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager
   realtime_tools
   base_hardware_interface
+  message_generation
+  geometry_msgs
 )
+      
+add_message_files(
+  FILES
+  QuadrupedForceTorqueSensors.msg
+)      
+      
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)      
       
 add_subdirectory(aliengo_hal)
 
